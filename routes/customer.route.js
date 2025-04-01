@@ -1,5 +1,5 @@
 import express from "express";
-import { addCustomer, getCustomers, getCustomerById, deleteCustomer, updateCustomer} from "../controllers/customer.controller.js";
+import { addCustomer, getCustomers, getCustomerById, deleteCustomer, updateCustomer,getPendingServicePlans,getCompleteServicePlans,searchCompleteServicePlans} from "../controllers/customer.controller.js";
 import isAuthenticated from "../auth/isAuthenticated.js";
 import { singleUpload } from "../middleware/multer.js";
 
@@ -10,5 +10,8 @@ router.route("/getCustomers").get( getCustomers);
 router.route("/getCustomerById/:id").put( getCustomerById);
 router.route("/updateCustomer/:id").post( updateCustomer);
 router.route("/deleteCustomer/:id").delete(deleteCustomer);
+router.route("/getPendingServicePlans").get( getPendingServicePlans);
+router.route("/getCompleteServicePlans").get( getCompleteServicePlans);
+router.route("/searchCompleteServicePlans").post( searchCompleteServicePlans);
 
 export default router;

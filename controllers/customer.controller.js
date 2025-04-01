@@ -32,7 +32,7 @@ export const addCustomer = async (req, res) => {
 // Get all customers
 export const getCustomers = async (req, res) => {
   try {
-    const customers = await Customer.find();
+    const customers = await Customer.find().select('-servicePlan');
     res.status(200).json({ customers, success: true });
   } catch (error) {
     console.error("Error fetching customers:", error);
@@ -100,5 +100,88 @@ export const deleteCustomer = async (req, res) => {
   } catch (error) {
     console.error("Error deleting customer:", error);
     res.status(500).json({ message: "Failed to delete customer", success: false });
+  }
+};
+
+export const getPendingServicePlans = async (req, res) => {
+  try {
+    const pendingServicePlans = await Customer.find(
+      { servicePlan: { $elemMatch: { status: "Pending" } } }
+    ).sort({ createdAt: -1 });
+    res.status(200).json({ customers:pendingServicePlans, success: true });
+  } catch (error) {
+    console.error("Error fetching ServicePlans:", error);
+    res
+      .status(500)
+      .json({ message: "Failed to fetch ServicePlans", success: false });
+  }
+};
+
+export const getCompleteServicePlans = async (req, res) => {
+  try {
+    const completeServicePlans = await Customer.find(
+      { servicePlan: { $elemMatch: { status: "Complete" } } }
+    ).sort({ createdAt: -1 });
+    const page = parseInt(req.query.page) || 1;
+
+        // Define the number of items per page
+        const limit = 12;
+
+        // Calculate the start and end indices for pagination
+        const startIndex = (page - 1) * limit;
+        const endIndex = page * limit;
+
+        // Paginate the reversed movies array
+        const paginatedCompleteServicePlans = completeServicePlans.slice(startIndex, endIndex);
+        return res.status(200).json({ 
+          customers:paginatedCompleteServicePlans, 
+          success: true ,
+          pagination: {
+          currentPage: page,
+          totalPages: Math.ceil(completeServicePlans.length / limit),
+      },});
+  } catch (error) {
+    console.error("Error fetching ServicePlans:", error);
+    res
+      .status(500)
+      .json({ message: "Failed to fetch ServicePlans", success: false });
+  }
+};
+
+export const searchCompleteServicePlans = async (req, res) => {
+  try {
+      const { search } = req.query;
+      if (!search) {
+          return res.status(400).json({ message: 'Search query is required', success: false });
+      }
+
+      const regex = new RegExp(search, 'i'); // Case-insensitive search
+
+      const completeServicePlans = await Customer.find({
+        servicePlan: { $elemMatch: { status: "Complete" } },
+          $or: [
+              { customerName: regex },
+              { email: regex },
+              { phone: regex },
+              { address: regex },
+              
+          ]
+      }).sort({ createdAt: -1 });;
+
+      if (!completeServicePlans) {
+          return res.status(404).json({ message: 'No Service Plan found', success: false });
+      }
+
+      return res.status(200).json({
+        customers: completeServicePlans,
+          success: true,
+          pagination: {
+              currentPage: 1,
+              totalPages: Math.ceil(completeServicePlans.length / 12),
+          },
+      });
+  } catch (error) {
+      console.error('Error searching service plans:', error);
+      res.status(500).json({ message: 'Failed to search service plans', success: false });
   }
 };
