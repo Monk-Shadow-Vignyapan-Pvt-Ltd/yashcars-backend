@@ -25,19 +25,6 @@ const customerSchema = new mongoose.Schema(
         type: String,
         required: true,
       },
-      carNo: {
-        type: String,
-        validate: {
-          validator: function (value) {
-            // If inventoryType is "Car Service", then carNo must be provided
-            if (this.inventoryType === "Car Service" && !value) {
-              return false;
-            }
-            return true;
-          },
-          message: "carNo is required when inventoryType is 'Car Service'",
-        },
-    },
     
     servicePlan: { type: mongoose.Schema.Types.Mixed, required: false },
     userId: {

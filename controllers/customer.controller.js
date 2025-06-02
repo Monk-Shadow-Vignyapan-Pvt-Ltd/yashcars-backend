@@ -3,7 +3,7 @@ import { Customer } from "../models/customer.model.js"; // Update the path as ne
 // Add a new customer
 export const addCustomer = async (req, res) => {
   try {
-    const { name, phone, email, address,inventoryType,carNo, servicePlan, userId } = req.body;
+    const { name, phone, email, address,inventoryType, servicePlan, userId } = req.body;
 
     if (!name || !phone || !inventoryType) {
       return res.status(400).json({ message: "Name phone and inventoryType are required", success: false });
@@ -15,7 +15,6 @@ export const addCustomer = async (req, res) => {
       email,
       address,
       inventoryType,
-      carNo,
       servicePlan,
       userId,
       
@@ -59,7 +58,7 @@ export const getCustomerById = async (req, res) => {
 export const updateCustomer = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, phone, email, address,inventoryType,carNo, servicePlan, userId } = req.body;
+    const { name, phone, email, address,inventoryType, servicePlan, userId } = req.body;
 
     const updatedData = {
       ...(name && { name }),
@@ -67,7 +66,6 @@ export const updateCustomer = async (req, res) => {
       ...(email && { email }),
       ...(address && { address }),
       ...(inventoryType && { inventoryType }),
-      ...(carNo && { carNo }),
       ...(servicePlan && { servicePlan }),
       ...(userId && { userId }),
     };
