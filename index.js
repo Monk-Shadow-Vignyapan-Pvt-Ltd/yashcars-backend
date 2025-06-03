@@ -41,6 +41,10 @@ app.use("/api/v1/tyreFittings", routes.tyreFittingRoute);
 app.use("/api/v1/balancings", routes.balancingRoute);
 app.use("/api/v1/carWashings", routes.carWashingRoute);
 app.use("/api/v1/customers", routes.customerRoute);
+app.use("/api/v1/blogs", routes.blogRoute);
+app.use("/api/v1/contacts", routes.contactRoute);
+app.use("/api/v1/tags", routes.tagRoute);
+app.use("/api/v1/services", routes.serviceRoute);
 
 app.listen(PORT, () => {
     console.log(`server running at port ${PORT}`);

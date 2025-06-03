@@ -9,6 +9,10 @@ import tyreFittingRoute from "./tyreFitting.route.js";
 import balancingRoute from "./balancing.route.js";
 import carWashingRoute from "./carWashing.route.js";
 import customerRoute from "./customer.route.js";
+import blogRoute from "./blog.route.js";
+import contactRoute from "./contact.route.js";
+import tagRoute from "./tag.route.js";
+import serviceRoute from "./service.route.js";
 
 const routes = {
   authRoute,
@@ -21,7 +25,11 @@ const routes = {
   tyreFittingRoute,
   balancingRoute,
   carWashingRoute,
-  customerRoute
+  customerRoute,
+  blogRoute,
+  contactRoute,
+  tagRoute,
+  serviceRoute
 };
 
 export default routes;

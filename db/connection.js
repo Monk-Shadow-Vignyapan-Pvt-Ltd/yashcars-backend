@@ -35,6 +35,7 @@ const connectDB = async () => {
                     { name: "Users", actions: { view: true, create: true, edit: true, delete: true } },
                     { name: "Brands", actions: { view: true, create: true, edit: true, delete: true } },
                     { name: "Inventories", actions: { view: true, create: true, edit: true, delete: true } },
+                    { name: "Web", actions: { view: true, create: true, edit: true, delete: true } },
                 ],
             });
 
