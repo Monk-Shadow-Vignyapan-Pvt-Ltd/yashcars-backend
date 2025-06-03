@@ -7,7 +7,8 @@ export const addService = async (req, res) => {
     const {
       serviceName,
       serviceDescription,
-      specification,
+      serviceUsps,
+      serviceQuality,
       schema,
       serviceImage,
       multiImages,
@@ -63,10 +64,11 @@ export const addService = async (req, res) => {
       (multiImages || []).map(async (img) => await compressImage(img))
     );
 
-    const newService = new ProductModel({
+    const newService = new Service({
       serviceName,
       serviceDescription,
-      specification,
+      serviceUsps,
+      serviceQuality,
       schema,
       serviceImage:compressedServiceImage,
       multiImages:compressedMultiImages,
@@ -166,7 +168,8 @@ export const updateService = async (req, res) => {
     const {
       serviceName,
       serviceDescription,
-      specification,
+      serviceUsps,
+      serviceQuality,
       schema,
       serviceImage,
       multiImages,
@@ -235,7 +238,8 @@ export const updateService = async (req, res) => {
     const updatedData = {
      serviceName,
       serviceDescription,
-      specification,
+      serviceUsps,
+      serviceQuality,
       schema,
       serviceImage:compressedServiceImage,
       multiImages:compressedMultiImages,

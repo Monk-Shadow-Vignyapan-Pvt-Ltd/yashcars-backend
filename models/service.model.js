@@ -11,8 +11,12 @@ const serviceSchema = new mongoose.Schema(
       type: String, // Store image as base64 or use a URL reference
       required: false,
     },
-    specification: {
-      type: String, // Store image as base64 or use a URL reference
+    serviceUsps: {
+      type: mongoose.Schema.Types.Mixed, // Store image as base64 or use a URL reference
+      required: false,
+    },
+    serviceQuality:{
+      type: mongoose.Schema.Types.Mixed, // Store image as base64 or use a URL reference
       required: false,
     },
       schema: {
