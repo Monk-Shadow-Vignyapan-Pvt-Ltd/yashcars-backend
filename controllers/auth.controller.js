@@ -6,7 +6,7 @@ import sharp from "sharp";
 // Signup Controller
 export const addUser = async (req, res) => {
   try {
-    const { email, password, username, avatar, role, roles, userId } = req.body;
+    const { email, password, username, avatar, role, roles, userId,services,timeRangess ,workingOn} = req.body;
     if (!email || !password || !username || !role) {
       return res.status(400).json({ msg: "Please enter all the fields" });
     }
@@ -54,6 +54,7 @@ export const addUser = async (req, res) => {
       avatar: avatar ? compressedBase64 : avatar,
       role,
       roles,
+      services,timeRanges ,workingOn,
       userId: userId === "" ? null : userId,
     });
 
@@ -114,15 +115,6 @@ export const getUser = async (req, res) => {
   try {
     const user = await User.findById(req.user);
     const users = await User.find();
-    const filteredUsers = users.map(
-      ({ _id, email, username, avatar, userId }) => ({
-        _id,
-        email,
-        username,
-        avatar,
-        userId,
-      })
-    );
 
     res.json({
       username: user.username,
@@ -132,7 +124,7 @@ export const getUser = async (req, res) => {
       roles: user.roles,
       selectedRoles: user.selectedRoles,
       userId: user.userId,
-      users: filteredUsers,
+      users: users,
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -188,7 +180,7 @@ export const getUsers = async (req, res) => {
 export const updateUser = async (req, res) => {
   try {
     const { id } = req.params;
-    const { email, password, username, avatar, role, roles, userId } = req.body;
+    const { email, password, username, avatar, role, roles, userId,services,timeRanges ,workingOn } = req.body;
 
     // Validate base64 image data if provided
     if (!email || !username || !role) {
@@ -230,7 +222,7 @@ export const updateUser = async (req, res) => {
       username,
       avatar: compressedBase64,
       role,
-      roles,
+      roles,services,timeRanges ,workingOn,
       userId: userId === "" ? null : userId,
     };
 
@@ -252,7 +244,7 @@ export const updateUser = async (req, res) => {
 export const updatePassword = async (req, res) => {
   try {
     const { id } = req.params;
-    const { email, password, username, avatar, role, roles, userId } = req.body;
+    const { email, password, username, avatar, role, roles, userId ,services,timeRanges ,workingOn} = req.body;
 
     // Validate base64 image data if provided
     if (!email || !username || !role) {
@@ -294,7 +286,7 @@ export const updatePassword = async (req, res) => {
       username,
       avatar: compressedBase64,
       role,
-      roles,
+      roles,services,timeRanges ,workingOn,
       userId: userId === "" ? null : userId,
     };
 
@@ -323,7 +315,7 @@ export const updateUserPassword = async (req, res) => {
       username,
       avatar,
       role,
-      roles,
+      roles,services,timeRanges ,workingOn,
       userId,
     } = req.body;
 
@@ -357,7 +349,7 @@ export const updateUserPassword = async (req, res) => {
       username,
       avatar: avatar,
       role,
-      roles,
+      roles,services,timeRanges ,workingOn,
       userId: userId === "" ? null : userId,
     };
 

@@ -29,6 +29,18 @@ const userSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.Mixed,  // Use Mixed for flexible structure (JSON-like object)
     required: false
   },
+  services:{
+    type: mongoose.Schema.Types.Mixed,  // Use Mixed for flexible structure (JSON-like object)
+    required: false
+  },
+  timeRanges:{
+    type: mongoose.Schema.Types.Mixed,  // Use Mixed for flexible structure (JSON-like object)
+    required: false
+  },
+  workingOn:{
+    type: mongoose.Schema.Types.Mixed,  // Use Mixed for flexible structure (JSON-like object)
+    required: false
+  },
   centerId:{
     type:mongoose.Schema.Types.ObjectId,
     required:false
