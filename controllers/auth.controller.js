@@ -6,7 +6,7 @@ import sharp from "sharp";
 // Signup Controller
 export const addUser = async (req, res) => {
   try {
-    const { email, password, username, avatar, role, roles, userId,services,timeRangess ,workingOn} = req.body;
+    const { email, password, username, avatar, role, roles, userId,services,timeRanges ,workingOn} = req.body;
     if (!email || !password || !username || !role) {
       return res.status(400).json({ msg: "Please enter all the fields" });
     }
