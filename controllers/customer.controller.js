@@ -9,6 +9,32 @@ export const addCustomer = async (req, res) => {
       return res.status(400).json({ message: "Name phone and inventoryType are required", success: false });
     }
 
+    const existingCustomer = await Customer.findOne({
+      $or: [{ email }, { phone }],
+    });
+
+    if (existingCustomer) {
+      // Update the existing contact
+      existingCustomer.name = name;
+      existingCustomer.phone = phone;
+      existingCustomer.email = email;
+      existingCustomer.address = address;
+      existingCustomer.inventoryType = inventoryType;
+      existingCustomer.servicePlan = [
+        ...(existingCustomer.servicePlan || []),
+        ...servicePlan,
+      ];
+      existingCustomer.userId = userId;
+      await existingCustomer.save();
+
+      return res.status(200).json({
+        message: "Customer updated successfully",
+        customer: existingCustomer,
+        success: true,
+      });
+
+    }
+
     const newCustomer = new Customer({
       name,
       phone,
