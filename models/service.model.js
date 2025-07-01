@@ -7,6 +7,10 @@ const serviceSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    serviceSubtitle: {
+      type: String, // Store image as base64 or use a URL reference
+      required: false,
+    },
     serviceDescription: {
       type: String, // Store image as base64 or use a URL reference
       required: false,

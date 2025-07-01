@@ -6,6 +6,7 @@ export const addService = async (req, res) => {
   try {
     const {
       serviceName,
+      serviceSubtitle,
       serviceDescription,
       serviceUsps,
       serviceQuality,
@@ -66,6 +67,7 @@ export const addService = async (req, res) => {
 
     const newService = new Service({
       serviceName,
+      serviceSubtitle,
       serviceDescription,
       serviceUsps,
       serviceQuality,
@@ -167,6 +169,7 @@ export const updateService = async (req, res) => {
     const { id } = req.params;
     const {
       serviceName,
+      serviceSubtitle,
       serviceDescription,
       serviceUsps,
       serviceQuality,
@@ -237,6 +240,7 @@ export const updateService = async (req, res) => {
 
     const updatedData = {
      serviceName,
+     serviceSubtitle,
       serviceDescription,
       serviceUsps,
       serviceQuality,
