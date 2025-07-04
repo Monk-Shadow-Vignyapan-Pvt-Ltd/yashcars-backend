@@ -2,6 +2,7 @@ import { User } from "../models/user.model.js";
 import jwt from "jsonwebtoken";
 import bcryptjs from "bcryptjs";
 import sharp from "sharp";
+import { Customer } from "../models/customer.model.js";
 
 // Signup Controller
 export const addUser = async (req, res) => {
@@ -115,6 +116,53 @@ export const getUser = async (req, res) => {
   try {
     const user = await User.findById(req.user);
     const users = await User.find();
+   const pendingTasks = await Customer.aggregate([
+  { $unwind: "$servicePlan" },
+  { $match: { "servicePlan.status": "Pending" } },
+  { $unwind: "$servicePlan.stage" },
+  { $match: { "servicePlan.stage.complete": false } },
+  {
+    $project: {
+      _id: 0,
+      customerUserId: "$userId",
+      stageWorkers: {
+        $filter: {
+          input: "$servicePlan.stage.workers",
+          as: "worker",
+          cond: { $eq: ["$$worker.completeTask", false] }
+        }
+      }
+    }
+  },
+  {
+    $addFields: {
+      allInvolvedUsers: {
+        $concatArrays: [
+          ["$customerUserId"],
+          { $ifNull: ["$stageWorkers.value", []] }
+        ]
+      }
+    }
+  },
+  { $unwind: "$allInvolvedUsers" },
+  {
+    $group: {
+      _id: "$allInvolvedUsers",
+      pendingCount: { $sum: 1 }
+    }
+  }
+]);
+
+    const pendingTaskMap = {};
+    pendingTasks.forEach(item => {
+      pendingTaskMap[item._id] = item.pendingCount;
+    });
+
+    // Attach pending task count to each user
+    const usersWithPendingTasks = users.map(u => ({
+      ...u._doc,
+      pendingTaskCount: pendingTaskMap[u._id.toString()] || 0
+    }));
 
     res.json({
       username: user.username,
@@ -124,7 +172,7 @@ export const getUser = async (req, res) => {
       roles: user.roles,
       selectedRoles: user.selectedRoles,
       userId: user.userId,
-      users: users,
+      users: usersWithPendingTasks,
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
