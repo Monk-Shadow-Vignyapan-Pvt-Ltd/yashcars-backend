@@ -11,6 +11,10 @@ const tyreFittingSchema = new mongoose.Schema(
         type: String,
         required: true,  
     },
+    size:{
+        type: String,
+        required: false,  
+    },
     type:{
         type: String,
         required: false,  

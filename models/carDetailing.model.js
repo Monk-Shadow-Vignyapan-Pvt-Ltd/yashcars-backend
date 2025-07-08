@@ -15,10 +15,6 @@ const carDetailingSchema = new mongoose.Schema(
       type: String,
       required: false,
     },
-    priceType: {
-        type: String,
-        required: true,
-      },
     price:{
         type: String,
         required: false, 

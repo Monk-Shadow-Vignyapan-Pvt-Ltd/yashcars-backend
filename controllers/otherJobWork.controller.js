@@ -30,7 +30,7 @@ export const addOtherJobWork = async (req, res) => {
 export const getOtherJobWorks = async (req, res) => {
   try {
     const jobWorks = await OtherJobWork.find();
-    if (!jobWorks || jobWorks.length === 0) {
+    if (!jobWorks) {
       return res.status(404).json({ message: 'No other job works found', success: false });
     }
     res.status(200).json({ jobWorks, success: true });

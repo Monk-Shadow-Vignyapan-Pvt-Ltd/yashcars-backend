@@ -3,9 +3,9 @@ import { CarDetailing } from '../models/carDetailing.model.js'; // Update the pa
 // Add a new car detailing service
 export const addCarDetailing = async (req, res) => {
   try {
-    const { carDetailingName, carType, brand, priceType, price, warranty,nextServicePeriod, userId } = req.body;
+    const { carDetailingName, carType, brand, price, warranty,nextServicePeriod, userId } = req.body;
 
-    if (!carDetailingName || !carType  || !priceType || !userId) {
+    if (!carDetailingName || !carType   || !userId) {
       return res.status(400).json({ message: 'Required fields are missing', success: false });
     }
 
@@ -13,7 +13,6 @@ export const addCarDetailing = async (req, res) => {
       carDetailingName,
       carType,
       brand,
-      priceType,
       price,
       warranty,
       nextServicePeriod,
@@ -58,13 +57,12 @@ export const getCarDetailingById = async (req, res) => {
 export const updateCarDetailing = async (req, res) => {
   try {
     const { id } = req.params;
-    const { carDetailingName, carType, brand, priceType, price, warranty,nextServicePeriod, userId } = req.body;
+    const { carDetailingName, carType, brand, price, warranty,nextServicePeriod, userId } = req.body;
 
     const updatedData = {
       ...(carDetailingName && { carDetailingName }),
       ...(carType && { carType }),
       ...(brand && { brand }),
-      ...(priceType && { priceType }),
       ...(price && { price }),
       ...(warranty && { warranty }),
       ...(nextServicePeriod && { nextServicePeriod }),
