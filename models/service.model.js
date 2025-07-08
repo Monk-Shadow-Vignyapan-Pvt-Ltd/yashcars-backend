@@ -52,6 +52,10 @@ const serviceSchema = new mongoose.Schema(
       required: false,
       unique:true,
     },
+    serviceVideo:{
+      type: String,
+      required: false,
+    },
     oldUrls: {
         type: mongoose.Schema.Types.Mixed,  // Use Mixed for flexible structure (JSON-like object)
         required: false

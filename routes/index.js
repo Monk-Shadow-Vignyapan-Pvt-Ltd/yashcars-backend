@@ -13,6 +13,8 @@ import blogRoute from "./blog.route.js";
 import contactRoute from "./contact.route.js";
 import tagRoute from "./tag.route.js";
 import serviceRoute from "./service.route.js";
+import faqRoute from "./faq.route.js";
+import gallaryRoute from "./gallary.route.js";
 
 const routes = {
   authRoute,
@@ -29,7 +31,9 @@ const routes = {
   blogRoute,
   contactRoute,
   tagRoute,
-  serviceRoute
+  serviceRoute,
+  faqRoute,
+  gallaryRoute
 };
 
 export default routes;
