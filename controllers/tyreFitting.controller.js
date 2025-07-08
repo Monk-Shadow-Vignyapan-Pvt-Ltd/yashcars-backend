@@ -3,7 +3,7 @@ import { TyreFitting } from '../models/tyreFitting.model.js'; // Update the path
 // Add a new tyre fitting
 export const addTyreFitting = async (req, res) => {
   try {
-    const {  brand, size, price, warranty, userId } = req.body;
+    const {  brand, size, price, warranty,nextServicePeriod, userId } = req.body;
 
     if (  !size || !userId) {
       return res.status(400).json({ message: 'Required fields are missing', success: false });
@@ -14,6 +14,7 @@ export const addTyreFitting = async (req, res) => {
       size,
       price,
       warranty,
+      nextServicePeriod,
       userId,
     });
 
@@ -58,13 +59,14 @@ export const getTyreFittingById = async (req, res) => {
 export const updateTyreFitting = async (req, res) => {
   try {
     const { id } = req.params;
-    const {  brand, size, price, warranty, userId } = req.body;
+    const {  brand, size, price, warranty,nextServicePeriod, userId } = req.body;
 
     const updatedData = {
       ...(brand && { brand }),
       ...(size && { size }),
       ...(price && { price }),
       ...(warranty && { warranty }),
+      ...(nextServicePeriod && { nextServicePeriod }),
       ...(userId && { userId }),
     };
 

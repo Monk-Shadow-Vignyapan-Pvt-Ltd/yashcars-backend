@@ -1,7 +1,7 @@
 // models/Doctor.js
 import mongoose from "mongoose";
 
-const carAccessoriesSchema = new mongoose.Schema(
+const otherJobWorkSchema = new mongoose.Schema(
   {
     inventoryName: {
       type: String,
@@ -31,4 +31,4 @@ const carAccessoriesSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-export const CarAccesssory = mongoose.model("CarAccesssory", carAccessoriesSchema);
+export const OtherJobWork = mongoose.model("OtherJobWork", otherJobWorkSchema);

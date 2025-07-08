@@ -27,6 +27,10 @@ const carDetailingSchema = new mongoose.Schema(
         type: String,
         required: false, 
     },
+    nextServicePeriod:{
+        type: String,
+        required: false, 
+    },
     userId: {
        type:mongoose.Schema.Types.ObjectId,
       required: true,

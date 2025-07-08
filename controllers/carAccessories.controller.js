@@ -3,7 +3,7 @@ import { CarAccesssory } from '../models/carAccessories.model.js'; // Update the
 // Add a new car accessory
 export const addCarAccessory = async (req, res) => {
   try {
-    const { inventoryName, brand, price, warranty, userId } = req.body;
+    const { inventoryName, brand, price, warranty,nextServicePeriod, userId } = req.body;
 
     if (!inventoryName || !userId) {
       return res.status(400).json({ message: 'Required fields are missing', success: false });
@@ -14,6 +14,7 @@ export const addCarAccessory = async (req, res) => {
       brand,
       price,
       warranty,
+      nextServicePeriod,
       userId,
     });
 
@@ -58,13 +59,14 @@ export const getCarAccessoryById = async (req, res) => {
 export const updateCarAccessory = async (req, res) => {
   try {
     const { id } = req.params;
-    const { inventoryName, brand, price, warranty, userId } = req.body;
+    const { inventoryName, brand, price, warranty,nextServicePeriod, userId } = req.body;
 
     const updatedData = {
       ...(inventoryName && { inventoryName }),
       ...(brand && { brand }),
       ...(price && { price }),
       ...(warranty && { warranty }),
+      ...(nextServicePeriod && { nextServicePeriod }),
       ...(userId && { userId }),
     };
 
