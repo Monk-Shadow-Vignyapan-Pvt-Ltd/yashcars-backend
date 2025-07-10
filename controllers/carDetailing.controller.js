@@ -5,7 +5,7 @@ export const addCarDetailing = async (req, res) => {
   try {
     const { carDetailingName, carType, brand, price, warranty,nextServicePeriod, userId } = req.body;
 
-    if (!carDetailingName || !carType   || !userId) {
+    if (!carDetailingName    || !userId) {
       return res.status(400).json({ message: 'Required fields are missing', success: false });
     }
 

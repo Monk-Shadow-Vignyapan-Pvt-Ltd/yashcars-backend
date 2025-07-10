@@ -21,12 +21,6 @@ const customerSchema = new mongoose.Schema(
         type: String,
         required: false,
       },
-    inventoryType: {
-        type: String,
-        required: true,
-      },
-    
-    servicePlan: { type: mongoose.Schema.Types.Mixed, required: false },
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       required: false,

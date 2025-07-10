@@ -16,6 +16,7 @@ import serviceRoute from "./service.route.js";
 import faqRoute from "./faq.route.js";
 import gallaryRoute from "./gallary.route.js";
 import otherJobWorkRoute from "./otherJobWork.route.js";
+import servicePlanRoute from "./servicePlan.route.js";
 
 const routes = {
   authRoute,
@@ -35,7 +36,8 @@ const routes = {
   serviceRoute,
   faqRoute,
   gallaryRoute,
-  otherJobWorkRoute
+  otherJobWorkRoute,
+  servicePlanRoute
 };
 
 export default routes;

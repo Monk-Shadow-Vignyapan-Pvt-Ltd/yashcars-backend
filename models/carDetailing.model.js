@@ -9,7 +9,7 @@ const carDetailingSchema = new mongoose.Schema(
     },
     carType: {
         type: String,
-        required: true,
+        required: false,
       },
     brand:{
       type: String,
