@@ -3,6 +3,10 @@ import mongoose from "mongoose";
 
 
 const servicePlanSchema = new mongoose.Schema({
+    purchaseType:{
+        type: String,
+        required: true,
+    },
     carBrand:{
         type: String,
         required: false,
@@ -53,13 +57,22 @@ const servicePlanSchema = new mongoose.Schema({
     },
     status:{
         type:String,
+        required: false,
+    },
+    uploads:{
+        type:mongoose.Schema.Types.Mixed,
             required: false,
     },
     customer: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Customer",
         required: true
-    }
+    },
+    userId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        required: false
+    },
 }, { timestamps: true });
 
 export const ServicePlan = mongoose.model("ServicePlan", servicePlanSchema);
