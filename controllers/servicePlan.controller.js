@@ -219,3 +219,137 @@ export const updateServicePlanUploads = async (req, res) => {
     res.status(500).json({ message: 'Failed to update uploads', success: false });
   }
 };
+
+export const getUserCompletedTasks = async (req, res) => {
+  try {
+    const { id: userId } = req.params;
+    const page = parseInt(req.query.page) || 1;
+    const limit = 9;
+    const skip = (page - 1) * limit;
+    const searchQuery = req.query.search || '';
+    let startDate = req.query.startDate ? new Date(req.query.startDate) : null;
+    let endDate = req.query.endDate ? new Date(req.query.endDate) : null;
+
+
+   const pipeline = [
+  { $unwind: "$servicePlan" },
+  { $unwind: "$servicePlan.workers" },
+  {
+    $addFields: {
+      "servicePlan.workers.dateCast": {
+        $toDate: "$servicePlan.workers.completeTaskDate"
+      }
+    }
+  },
+  {
+    $match: {
+      "servicePlan.workers.value": userId,
+      "servicePlan.workers.completeTask": true,
+      ...(startDate && endDate && {
+        "servicePlan.workers.dateCast": { $gte: startDate, $lte: endDate }
+      }),
+      ...(startDate && !endDate && {
+        "servicePlan.workers.dateCast": { $gte: startDate }
+      }),
+      ...(!startDate && endDate && {
+        "servicePlan.workers.dateCast": { $lte: endDate }
+      }),
+    }
+  },
+  {
+    $lookup: {
+      from: "customers",
+      localField: "customer",
+      foreignField: "_id",
+      as: "customer"
+    }
+  },
+  {
+    $unwind: {
+      path: "$customer",
+      preserveNullAndEmptyArrays: true
+    }
+  },
+  ...(searchQuery ? [{
+    $match: {
+      $or: [
+        { "customer.name": { $regex: searchQuery, $options: "i" } },
+        { "customer.phone": { $regex: searchQuery, $options: "i" } },
+        { "customer.email": { $regex: searchQuery, $options: "i" } },
+        { "customer.address": { $regex: searchQuery, $options: "i" } },
+        { "carNo": { $regex: searchQuery, $options: "i" } },
+      ]
+    }
+  }] : []),
+  {
+    $project: {
+      _id: 1,
+      purchaseType: 1,
+      carBrand: 1,
+      carName: 1,
+      jobNo: 1,
+      milege: 1,
+      jobDate: 1,
+      deliveryDate: 1,
+      advisor: 1,
+      carNo: 1,
+      servicePlan: 1,
+      subTotal: 1,
+      gst: 1,
+      grandTotal: 1,
+      status: 1,
+      customer: 1,
+      userId: 1,
+      createdAt: 1,
+      updatedAt: 1,
+      service: "$servicePlan.service",
+      product: "$servicePlan.product",
+      matchedWorker: "$servicePlan.workers",
+      uploads: {
+        $filter: {
+          input: "$uploads",
+          as: "upload",
+          cond: {
+            $and: [
+              { $eq: ["$$upload.userId", userId] },
+              { $eq: ["$$upload.serviceName", "$servicePlan.service"] }
+            ]
+          }
+        }
+      }
+    }
+  },
+  { $sort: { "servicePlan.workers.completeTaskDate": -1 } },
+  { $skip: skip },
+  { $limit: limit }
+];
+
+
+    const tasks = await ServicePlan.aggregate(pipeline);
+
+    // Count pipeline (before $project)
+    const countPipeline = pipeline.slice(0, pipeline.findIndex(p => p.$project));
+    countPipeline.push({ $count: "totalCount" }); 
+
+    const countResult = await ServicePlan.aggregate(countPipeline);
+    const totalCount = countResult[0]?.totalCount || 0;
+
+    return res.status(200).json({
+      success: true,
+      completedTasks: tasks,
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(totalCount / limit),
+        totalCount,
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching user completed tasks:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch user completed tasks",
+    });
+  }
+};
+
+

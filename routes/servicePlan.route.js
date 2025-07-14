@@ -1,5 +1,5 @@
 import express from "express";
-import { addServicePlan, getServicePlans, getServicePlanById, deleteServicePlan, updateServicePlan,getPendingServicePlans,getCompletedServicePlans,updateServicePlanUploads} from "../controllers/servicePlan.controller.js";
+import { addServicePlan, getServicePlans, getServicePlanById, deleteServicePlan, updateServicePlan,getPendingServicePlans,getCompletedServicePlans,updateServicePlanUploads,getUserCompletedTasks} from "../controllers/servicePlan.controller.js";
 import isAuthenticated from "../auth/isAuthenticated.js";
 import { singleUpload } from "../middleware/multer.js";
 
@@ -13,5 +13,6 @@ router.route("/deleteServicePlan/:id").delete(deleteServicePlan);
 router.route("/getPendingServicePlans").get( getPendingServicePlans);
 router.route("/getCompletedServicePlans").get( getCompletedServicePlans);
 router.route("/updateServicePlanUploads/:id").post( updateServicePlanUploads);
+router.route("/getUserCompletedTasks/:id").get( getUserCompletedTasks);
 
 export default router;
