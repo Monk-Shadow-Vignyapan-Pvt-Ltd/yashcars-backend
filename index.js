@@ -5,12 +5,31 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import bodyParser from "body-parser";
 import routes from "./routes/index.js";
+import { createServer } from "http"; 
+import { Server } from "socket.io";
 
 dotenv.config();
 // connect db
 connectDB();
 const PORT = process.env.PORT || 8080;
 const app = express();
+
+const server = createServer(app); // Create an HTTP server
+const io = new Server(server, {
+  cors: {
+    origin: "*", // Adjust according to your needs
+    methods: ["GET", "POST"],
+  },
+});
+
+// WebSocket connection
+io.on("connection", (socket) => {
+  //console.log("New client connected");
+
+  socket.on("disconnect", () => {
+    //  console.log("Client disconnected");
+  });
+});
 
 
 app.use(express.json({ limit: '50mb' }));
@@ -50,6 +69,8 @@ app.use("/api/v1/gallaries", routes.gallaryRoute);
 app.use("/api/v1/otherJobWorks", routes.otherJobWorkRoute);
 app.use("/api/v1/servicePlans", routes.servicePlanRoute);
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
     console.log(`server running at port ${PORT}`);
 });
+
+export { io };

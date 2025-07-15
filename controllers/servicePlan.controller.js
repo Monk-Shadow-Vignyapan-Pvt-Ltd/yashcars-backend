@@ -1,6 +1,7 @@
 import { ServicePlan } from '../models/servicePlan.model.js'; // Update path as needed
 import moment from 'moment';
 import { Customer } from "../models/customer.model.js";
+import { io } from "../index.js";
 
 // Add a new service plan
 export const addServicePlan = async (req, res) => {
@@ -48,6 +49,7 @@ export const addServicePlan = async (req, res) => {
     });
 
     await newServicePlan.save();
+     io.emit("servicePlanAddUpdate",  { success: true } );
     res.status(201).json({ servicePlan: newServicePlan, success: true });
   } catch (error) {
     console.error('Error adding service plan:', error);
@@ -129,6 +131,7 @@ export const updateServicePlan = async (req, res) => {
     if (!updatedServicePlan) {
       return res.status(404).json({ message: 'Service plan not found', success: false });
     }
+    io.emit("servicePlanAddUpdate",  { success: true } );
 
     res.status(200).json({ servicePlan: updatedServicePlan, success: true });
   } catch (error) {
@@ -146,6 +149,7 @@ export const deleteServicePlan = async (req, res) => {
     if (!deletedPlan) {
       return res.status(404).json({ message: 'Service plan not found', success: false });
     }
+    io.emit("servicePlanAddUpdate",  { success: true } );
     res.status(200).json({ servicePlan: deletedPlan, success: true });
   } catch (error) {
     console.error('Error deleting service plan:', error);
@@ -170,15 +174,73 @@ export const getCompletedServicePlans = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
+    const { startDate, endDate, search } = req.query;
 
-    const [completedPlans, total] = await Promise.all([
-      ServicePlan.find({ status: "Completed" })
-        .populate('customer')
-        .skip(skip)
-        .limit(limit)
-        .sort({ createdAt: -1 }),
-      ServicePlan.countDocuments({ status: "Completed" })
-    ]);
+    const matchQuery = { status: "Completed" };
+
+    // Date range filter
+    if (startDate && endDate) {
+      matchQuery.createdAt = {
+        $gte: new Date(startDate),
+        $lte: new Date(endDate)
+      };
+    }
+
+    // Search by customer name or phone or email
+    if (search) {
+      matchQuery.$or = [
+        { 'customer.name': { $regex: search, $options: 'i' } },
+        { 'customer.email': { $regex: search, $options: 'i' } },
+        { 'customer.phone': { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    // Use aggregation to search in populated fields
+    const aggregateQuery = [
+      { $match: { status: "Completed" } },
+      { $lookup: {
+          from: "customers",
+          localField: "customer",
+          foreignField: "_id",
+          as: "customer"
+      }},
+      { $unwind: "$customer" },
+    ];
+
+    // Add optional filters
+    if (startDate && endDate) {
+      aggregateQuery.push({
+        $match: {
+          createdAt: {
+            $gte: new Date(startDate),
+            $lte: new Date(endDate)
+          }
+        }
+      });
+    }
+
+    if (search) {
+      aggregateQuery.push({
+        $match: {
+          $or: [
+            { "customer.name": { $regex: search, $options: "i" } },
+            { "customer.email": { $regex: search, $options: "i" } },
+            { "customer.phone": { $regex: search, $options: "i" } },
+          ]
+        }
+      });
+    }
+
+    // Count total results
+    const countQuery = [...aggregateQuery, { $count: "total" }];
+    const totalResult = await ServicePlan.aggregate(countQuery);
+    const total = totalResult[0]?.total || 0;
+
+    // Paginated results
+    aggregateQuery.push({ $sort: { createdAt: -1 } });
+    aggregateQuery.push({ $skip: skip }, { $limit: limit });
+
+    const completedPlans = await ServicePlan.aggregate(aggregateQuery);
 
     res.status(200).json({
       servicePlans: completedPlans,
@@ -192,6 +254,7 @@ export const getCompletedServicePlans = async (req, res) => {
     res.status(500).json({ message: 'Failed to fetch completed service plans', success: false });
   }
 };
+
 
 // Update uploads for a service plan
 export const updateServicePlanUploads = async (req, res) => {
