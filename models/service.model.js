@@ -11,6 +11,10 @@ const serviceSchema = new mongoose.Schema(
       type: String, // Store image as base64 or use a URL reference
       required: false,
     },
+    serviceType: {
+      type: String, // Store image as base64 or use a URL reference
+      required: true,
+    },
     serviceDescription: {
       type: String, // Store image as base64 or use a URL reference
       required: false,
@@ -19,11 +23,11 @@ const serviceSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.Mixed, // Store image as base64 or use a URL reference
       required: false,
     },
-    serviceQuality:{
+    serviceQuality: {
       type: mongoose.Schema.Types.Mixed, // Store image as base64 or use a URL reference
       required: false,
     },
-      schema: {
+    schema: {
       type: String, // Store image as base64 or use a URL reference
       required: false,
     },
@@ -50,15 +54,15 @@ const serviceSchema = new mongoose.Schema(
     serviceUrl: {
       type: String,
       required: false,
-      unique:true,
+      unique: true,
     },
-    serviceVideo:{
+    serviceVideo: {
       type: String,
       required: false,
     },
     oldUrls: {
-        type: mongoose.Schema.Types.Mixed,  // Use Mixed for flexible structure (JSON-like object)
-        required: false
+      type: mongoose.Schema.Types.Mixed,  // Use Mixed for flexible structure (JSON-like object)
+      required: false
     },
     seoTitle: {
       type: String,

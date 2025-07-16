@@ -15,6 +15,7 @@ export const addService = async (req, res) => {
       serviceVideo,
       multiImages,
       hasWarranty,
+      serviceType,
       warranty,
       serviceUrl,
       seoTitle,
@@ -25,37 +26,37 @@ export const addService = async (req, res) => {
 
 
     const compressImage = async (base64String) => {
-  if (!base64String.startsWith("data:image")) return base64String;
+      if (!base64String.startsWith("data:image")) return base64String;
 
-  const mimeType = base64String.split(";")[0].split(":")[1];
-  const base64Data = base64String.split(";base64,").pop();
-  const buffer = Buffer.from(base64Data, "base64");
+      const mimeType = base64String.split(";")[0].split(":")[1];
+      const base64Data = base64String.split(";base64,").pop();
+      const buffer = Buffer.from(base64Data, "base64");
 
-  let compressedBuffer;
-  let outputFormat = "jpeg"; // default
+      let compressedBuffer;
+      let outputFormat = "jpeg"; // default
 
-  if (mimeType === "image/png") {
-    compressedBuffer = await sharp(buffer)
-      .resize(800, 600, { fit: "inside" })
-      .png({ quality: 90 })
-      .toBuffer();
-    outputFormat = "png";
-  } else if (mimeType === "image/webp") {
-    compressedBuffer = await sharp(buffer)
-      .resize(800, 600, { fit: "inside" })
-      .webp({ quality: 80 })
-      .toBuffer();
-    outputFormat = "webp";
-  } else {
-    compressedBuffer = await sharp(buffer)
-      .resize(800, 600, { fit: "inside" })
-      .jpeg({ quality: 80 })
-      .toBuffer();
-    outputFormat = "jpeg";
-  }
+      if (mimeType === "image/png") {
+        compressedBuffer = await sharp(buffer)
+          .resize(800, 600, { fit: "inside" })
+          .png({ quality: 90 })
+          .toBuffer();
+        outputFormat = "png";
+      } else if (mimeType === "image/webp") {
+        compressedBuffer = await sharp(buffer)
+          .resize(800, 600, { fit: "inside" })
+          .webp({ quality: 80 })
+          .toBuffer();
+        outputFormat = "webp";
+      } else {
+        compressedBuffer = await sharp(buffer)
+          .resize(800, 600, { fit: "inside" })
+          .jpeg({ quality: 80 })
+          .toBuffer();
+        outputFormat = "jpeg";
+      }
 
-  return `data:image/${outputFormat};base64,${compressedBuffer.toString("base64")}`;
-};
+      return `data:image/${outputFormat};base64,${compressedBuffer.toString("base64")}`;
+    };
 
 
     // Process mainPhoto
@@ -73,12 +74,13 @@ export const addService = async (req, res) => {
       serviceUsps,
       serviceQuality,
       schema,
-      serviceImage:compressedServiceImage,
-      multiImages:compressedMultiImages,
+      serviceImage: compressedServiceImage,
+      multiImages: compressedMultiImages,
       serviceVideo,
       hasWarranty,
       warranty,
       serviceUrl,
+      serviceType,
       seoTitle,
       seoDescription,
       serviceEnabled,
@@ -110,7 +112,7 @@ export const getServices = async (req, res) => {
 
 export const getServicesFrontend = async (req, res) => {
   try {
-    const services = await Service.find({serviceEnabled:true}).select(
+    const services = await Service.find({ serviceEnabled: true }).select(
       "serviceName serviceDescription serviceImage serviceUrl price"
     );
     if (!services)
@@ -134,7 +136,7 @@ export const getServiceByUrl = async (req, res) => {
       return res
         .status(404)
         .json({ message: "service not found!", success: false });
-         // Split categories string into array, trimming spaces
+    // Split categories string into array, trimming spaces
 
     // Find other products having at least one matching category (regex match)
     const randomServices = await Service.aggregate([
@@ -147,16 +149,16 @@ export const getServiceByUrl = async (req, res) => {
       { $sample: { size: 8 } },
       {
         $project: {
-          serviceName:1,
+          serviceName: 1,
           serviceDescription: 1,
           serviceImage: 1,
           serviceUrl: 1,
-          price:1
+          price: 1
         },
       },
     ]);
-    
-    return res.status(200).json({ service,relatedServices:randomServices, success: true });
+
+    return res.status(200).json({ service, relatedServices: randomServices, success: true });
   } catch (error) {
     console.log(error);
     res
@@ -174,7 +176,7 @@ export const updateService = async (req, res) => {
       serviceSubtitle,
       serviceDescription,
       serviceUsps,
-      serviceQuality,
+      serviceQuality, serviceType,
       schema,
       serviceImage,
       serviceVideo,
@@ -188,49 +190,49 @@ export const updateService = async (req, res) => {
       price,
     } = req.body;
 
-     const existingService = await Service.findById(id);
-        if (!existingService) {
-            return res.status(404).json({ message: "Service not found!", success: false });
-        }
+    const existingService = await Service.findById(id);
+    if (!existingService) {
+      return res.status(404).json({ message: "Service not found!", success: false });
+    }
 
-        // Initialize oldUrls array and add the previous serviceUrl if it's different
-        let oldUrls = existingService.oldUrls || [];
-        if (existingService.serviceUrl && existingService.serviceUrl !== serviceUrl && !oldUrls.includes(existingService.serviceUrl)) {
-            oldUrls.push(existingService.serviceUrl);
-        }
+    // Initialize oldUrls array and add the previous serviceUrl if it's different
+    let oldUrls = existingService.oldUrls || [];
+    if (existingService.serviceUrl && existingService.serviceUrl !== serviceUrl && !oldUrls.includes(existingService.serviceUrl)) {
+      oldUrls.push(existingService.serviceUrl);
+    }
 
     const compressImage = async (base64String) => {
-  if (!base64String.startsWith("data:image")) return base64String;
+      if (!base64String.startsWith("data:image")) return base64String;
 
-  const mimeType = base64String.split(";")[0].split(":")[1];
-  const base64Data = base64String.split(";base64,").pop();
-  const buffer = Buffer.from(base64Data, "base64");
+      const mimeType = base64String.split(";")[0].split(":")[1];
+      const base64Data = base64String.split(";base64,").pop();
+      const buffer = Buffer.from(base64Data, "base64");
 
-  let compressedBuffer;
-  let outputFormat = "jpeg"; // default
+      let compressedBuffer;
+      let outputFormat = "jpeg"; // default
 
-  if (mimeType === "image/png") {
-    compressedBuffer = await sharp(buffer)
-      .resize(800, 600, { fit: "inside" })
-      .png({ quality: 90 })
-      .toBuffer();
-    outputFormat = "png";
-  } else if (mimeType === "image/webp") {
-    compressedBuffer = await sharp(buffer)
-      .resize(800, 600, { fit: "inside" })
-      .webp({ quality: 80 })
-      .toBuffer();
-    outputFormat = "webp";
-  } else {
-    compressedBuffer = await sharp(buffer)
-      .resize(800, 600, { fit: "inside" })
-      .jpeg({ quality: 80 })
-      .toBuffer();
-    outputFormat = "jpeg";
-  }
+      if (mimeType === "image/png") {
+        compressedBuffer = await sharp(buffer)
+          .resize(800, 600, { fit: "inside" })
+          .png({ quality: 90 })
+          .toBuffer();
+        outputFormat = "png";
+      } else if (mimeType === "image/webp") {
+        compressedBuffer = await sharp(buffer)
+          .resize(800, 600, { fit: "inside" })
+          .webp({ quality: 80 })
+          .toBuffer();
+        outputFormat = "webp";
+      } else {
+        compressedBuffer = await sharp(buffer)
+          .resize(800, 600, { fit: "inside" })
+          .jpeg({ quality: 80 })
+          .toBuffer();
+        outputFormat = "jpeg";
+      }
 
-  return `data:image/${outputFormat};base64,${compressedBuffer.toString("base64")}`;
-};
+      return `data:image/${outputFormat};base64,${compressedBuffer.toString("base64")}`;
+    };
 
 
     // Process mainPhoto
@@ -242,15 +244,16 @@ export const updateService = async (req, res) => {
     );
 
     const updatedData = {
-     serviceName,
-     serviceSubtitle,
+      serviceName,
+      serviceSubtitle,
       serviceDescription,
       serviceUsps,
       serviceQuality,
+      serviceType,
       schema,
-      serviceImage:compressedServiceImage,
+      serviceImage: compressedServiceImage,
       serviceVideo,
-      multiImages:compressedMultiImages,
+      multiImages: compressedMultiImages,
       hasWarranty,
       warranty,
       serviceUrl,
@@ -286,7 +289,7 @@ export const onOffService = async (req, res) => {
     const { id } = req.params;
     let { serviceEnabled } = req.body;
 
-    const service = await Service.findByIdAndUpdate(id, {serviceEnabled}, {
+    const service = await Service.findByIdAndUpdate(id, { serviceEnabled }, {
       new: true,
       runValidators: true,
     });
