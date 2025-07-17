@@ -7,28 +7,70 @@ import { io } from "../index.js";
 export const addServicePlan = async (req, res) => {
   try {
     const {
-      carBrand, carName,  milege, deliveryDate,purchaseType,
+      carBrand, carName, milege, deliveryDate, purchaseType,
       advisor, carNo, servicePlan, subTotal, gst, grandTotal,
-      status,name,phone,email,address,userId
+      status, name, phone, alternatePhone, email, address, userId
     } = req.body;
 
-     if (!name || !phone) {
-      return res.status(400).json({ message: 'Customer name and phone are required', success: false });
+    if (!name) {
+      return res.status(400).json({ message: 'Customer name is required', success: false });
     }
 
-    // 1. Check for existing customer by phone
-    let customer = await Customer.findOne({ phone });
+    // 1. Find existing customer using phone or alternatePhone
+    let customer;
+    if (phone || alternatePhone) {
+      const phoneQuery = [];
+      if (phone) phoneQuery.push({ phone });
+      if (alternatePhone) phoneQuery.push({ alternatePhone });
 
-    // 2. If not exists, create a new customer
+      customer = await Customer.findOne({ $or: phoneQuery });
+    }
+
+    // 2. Create if not exists
     if (!customer) {
-      customer = await Customer.create({ name, phone, email, address,userId });
+      customer = await Customer.create({
+        name,
+        phone,
+        alternatePhone,
+        email,
+        address,
+        userId
+      });
+    } else {
+      // 3. Update existing customer if fields have changed
+      let updated = false;
+
+      if (customer.name !== name) {
+        customer.name = name;
+        updated = true;
+      }
+      if (email && customer.email !== email) {
+        customer.email = email;
+        updated = true;
+      }
+      if (address && customer.address !== address) {
+        customer.address = address;
+        updated = true;
+      }
+      if (phone && customer.phone !== phone) {
+        customer.phone = phone;
+        updated = true;
+      }
+      if (alternatePhone && customer.alternatePhone !== alternatePhone) {
+        customer.alternatePhone = alternatePhone;
+        updated = true;
+      }
+
+      if (updated) {
+        await customer.save();
+      }
     }
 
-     const now = new Date();
+    // Job number generation
+    const now = new Date();
     const formattedDate = moment(now).format('DD-MM-YYYY');
     const prefix = 'YC';
 
-    // Generate order ID
     const dateStart = moment().startOf('day').toDate();
     const dateEnd = moment().endOf('day').toDate();
 
@@ -43,19 +85,34 @@ export const addServicePlan = async (req, res) => {
 
     const newServicePlan = new ServicePlan({
       purchaseType,
-      carBrand, carName, jobNo, milege, jobDate, deliveryDate,
-      advisor, carNo, servicePlan, subTotal, gst, grandTotal,
-      status, customer,userId
+      carBrand,
+      carName,
+      jobNo,
+      milege,
+      jobDate,
+      deliveryDate,
+      advisor,
+      carNo,
+      servicePlan,
+      subTotal,
+      gst,
+      grandTotal,
+      status,
+      customer: customer._id,
+      userId
     });
 
     await newServicePlan.save();
-     io.emit("servicePlanAddUpdate",  { success: true } );
+
+    io.emit("servicePlanAddUpdate", { success: true });
     res.status(201).json({ servicePlan: newServicePlan, success: true });
+
   } catch (error) {
     console.error('Error adding service plan:', error);
     res.status(500).json({ message: 'Failed to add service plan', success: false });
   }
 };
+
 
 // Get all service plans
 export const getServicePlans = async (req, res) => {
@@ -89,19 +146,63 @@ export const updateServicePlan = async (req, res) => {
     const {
       carBrand, carName, milege, deliveryDate,purchaseType,
       advisor, carNo, servicePlan, subTotal, gst, grandTotal,
-      status, name, phone, email, address, userId,
+      status, name, phone,alternatePhone, email, address, userId,
     } = req.body;
 
-    if (!name || !phone) {
-      return res.status(400).json({ message: 'Customer name and phone are required', success: false });
+    if (!name) {
+      return res.status(400).json({ message: 'Customer name is required', success: false });
     }
 
-    // 1. Find or create customer
-    let customer = await Customer.findOne({ phone });
+    // 1. Check for existing customer using available phone or alternatePhone
+    let customer;
+    if (phone || alternatePhone) {
+      const phoneQuery = [];
+      if (phone) phoneQuery.push({ phone });
+      if (alternatePhone) phoneQuery.push({ alternatePhone });
 
+      customer = await Customer.findOne({ $or: phoneQuery });
+    }
+
+    // 2. If not exists, create a new customer
     if (!customer) {
-      customer = await Customer.create({ name, phone, email, address, userId });
+      customer = await Customer.create({
+        name,
+        phone,
+        alternatePhone,
+        email,
+        address,
+        userId
+      });
+    } else {
+      // 3. Update existing customer if fields have changed
+      let updated = false;
+
+      if (customer.name !== name) {
+        customer.name = name;
+        updated = true;
+      }
+      if (email && customer.email !== email) {
+        customer.email = email;
+        updated = true;
+      }
+      if (address && customer.address !== address) {
+        customer.address = address;
+        updated = true;
+      }
+      if (phone && customer.phone !== phone) {
+        customer.phone = phone;
+        updated = true;
+      }
+      if (alternatePhone && customer.alternatePhone !== alternatePhone) {
+        customer.alternatePhone = alternatePhone;
+        updated = true;
+      }
+
+      if (updated) {
+        await customer.save();
+      }
     }
+
 
     // 2. Update service plan with new data + customer ID
     const updatedServicePlan = await ServicePlan.findByIdAndUpdate(
@@ -191,7 +292,8 @@ export const getCompletedServicePlans = async (req, res) => {
       matchQuery.$or = [
         { 'customer.name': { $regex: search, $options: 'i' } },
         { 'customer.email': { $regex: search, $options: 'i' } },
-        { 'customer.phone': { $regex: search, $options: 'i' } }
+        { 'customer.phone': { $regex: search, $options: 'i' } },
+        { 'customer.alternatePhone': { $regex: search, $options: 'i' } }
       ];
     }
 
@@ -226,6 +328,7 @@ export const getCompletedServicePlans = async (req, res) => {
             { "customer.name": { $regex: search, $options: "i" } },
             { "customer.email": { $regex: search, $options: "i" } },
             { "customer.phone": { $regex: search, $options: "i" } },
+            { 'customer.alternatePhone': { $regex: search, $options: 'i' } }
           ]
         }
       });
@@ -340,7 +443,7 @@ export const getUserCompletedTasks = async (req, res) => {
         { "customer.phone": { $regex: searchQuery, $options: "i" } },
         { "customer.email": { $regex: searchQuery, $options: "i" } },
         { "customer.address": { $regex: searchQuery, $options: "i" } },
-        { "carNo": { $regex: searchQuery, $options: "i" } },
+        { 'customer.alternatePhone': { $regex: searchQuery, $options: 'i' } }
       ]
     }
   }] : []),

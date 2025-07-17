@@ -3,10 +3,10 @@ import { Customer } from "../models/customer.model.js"; // Update the path as ne
 // Add a new customer
 export const addCustomer = async (req, res) => {
   try {
-    const { name, phone, email, address, userId } = req.body;
+    const { name, phone,alternatePhone, email, address, userId } = req.body;
 
-    if (!name || !phone ) {
-      return res.status(400).json({ message: "Name and phone are required", success: false });
+    if (!name  ) {
+      return res.status(400).json({ message: "Name is required", success: false });
     }
 
     const existingCustomer = await Customer.findOne({
@@ -17,6 +17,7 @@ export const addCustomer = async (req, res) => {
       // Update the existing contact
       existingCustomer.name = name;
       existingCustomer.phone = phone;
+      existingCustomer.alternatePhone = alternatePhone;
       existingCustomer.email = email;
       existingCustomer.address = address;
       existingCustomer.userId = userId;
@@ -33,6 +34,7 @@ export const addCustomer = async (req, res) => {
     const newCustomer = new Customer({
       name,
       phone,
+      alternatePhone,
       email,
       address,
       userId,
@@ -77,11 +79,12 @@ export const getCustomerById = async (req, res) => {
 export const updateCustomer = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, phone, email, address, userId } = req.body;
+    const { name, phone,alternatePhone, email, address, userId } = req.body;
 
     const updatedData = {
       ...(name && { name }),
       ...(phone && { phone }),
+      ...(alternatePhone && { alternatePhone }),
       ...(email && { email }),
       ...(address && { address }),
       ...(userId && { userId }),

@@ -8,7 +8,12 @@ const customerSchema = new mongoose.Schema(
     },
     phone: {
         type: String,
-        required: true,
+        required: false,
+        trim: true,
+    },
+    alternatePhone: {
+        type: String,
+        required: false,
         trim: true,
     },
     email: {
