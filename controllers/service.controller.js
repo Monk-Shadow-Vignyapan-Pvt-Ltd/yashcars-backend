@@ -99,16 +99,38 @@ export const addService = async (req, res) => {
 
 export const getServices = async (req, res) => {
   try {
-    const services = await Service.find();
-    if (!services) {
-      return res.status(404).json({ message: 'No services found', success: false });
+    const { search } = req.query;
+
+    let services;
+
+    if (search) {
+      const regex = new RegExp(search, 'i'); // Case-insensitive regex
+
+      services = await Service.find({
+        $or: [
+          { serviceName: regex },
+          { serviceDescription: regex },
+          { serviceSubtitle: regex },
+        ],
+      }).sort({ createdAt: -1 });
+
+      if (services.length === 0) {
+        return res.status(404).json({ message: 'No services match your search', success: false });
+      }
+    } else {
+      services = await Service.find();
+      if (services.length === 0) {
+        return res.status(404).json({ message: 'No services found', success: false });
+      }
     }
+
     res.status(200).json({ services, success: true });
   } catch (error) {
     console.error('Error fetching services:', error);
     res.status(500).json({ message: 'Failed to fetch services', success: false });
   }
 };
+
 
 export const getServicesFrontend = async (req, res) => {
   try {
