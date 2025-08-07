@@ -32,6 +32,7 @@ const contactSchema = new mongoose.Schema({
         type: Boolean,
         required: true,
     },
+    
     userId:{
         type: mongoose.Schema.Types.ObjectId, 
           required:false
