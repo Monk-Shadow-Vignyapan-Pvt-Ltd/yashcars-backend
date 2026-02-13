@@ -24,6 +24,7 @@ const io = new Server(server, {
       "http://localhost:3000",
       "https://symphonix.co.in",
       "https://console.symphonix.co.in",
+      "https://yash-cars-next-new.vercel.app"
     ],
     credentials: true,
   },
@@ -54,6 +55,7 @@ app.use(
       "http://localhost:3000",
       "https://symphonix.co.in",
       "https://console.symphonix.co.in",
+      "https://yash-cars-next-new.vercel.app"
     ], // Allow both domains
     methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
     allowedHeaders: [
