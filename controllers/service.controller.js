@@ -131,11 +131,10 @@ export const getServices = async (req, res) => {
   }
 };
 
-
 export const getServicesFrontend = async (req, res) => {
   try {
     const services = await Service.find({ serviceEnabled: true }).select(
-      "serviceName serviceDescription serviceImage serviceUrl price"
+      "serviceName serviceDescription serviceUrl price"
     );
     if (!services)
       return res
@@ -153,7 +152,7 @@ export const getServicesFrontend = async (req, res) => {
 export const getServiceByUrl = async (req, res) => {
   try {
     const serviceUrl = req.params.id;
-    const service = await Service.findOne({ serviceUrl }); // Populating category data
+    const service = await Service.findOne({ serviceUrl }).select("-serviceImage -serviceVideo -multiImages"); // Populating category data
     if (!service)
       return res
         .status(404)
@@ -186,6 +185,118 @@ export const getServiceByUrl = async (req, res) => {
     res
       .status(500)
       .json({ message: "Failed to fetch service", success: false });
+  }
+};
+
+export const getServiceImageByUrl = async (req, res) => {
+  try {
+    const { serviceUrl } = req.params;
+    const service = await Service.findOne({ serviceUrl }).select('serviceImage');
+    if (!service) return res.status(404).json({ message: "Service not found!", success: false });
+    const matches = service.serviceImage.match(/^data:(.+);base64,(.+)$/);
+    if (!matches) {
+      return res.status(400).send('Invalid image format');
+    }
+
+    const mimeType = matches[1];
+    const base64Data = matches[2];
+    const buffer = Buffer.from(base64Data, 'base64');
+
+    res.set('Content-Type', mimeType);
+    res.send(buffer);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: 'Failed to fetch service image', success: false });
+  }
+};
+
+export const getServiceVideoByUrl = async (req, res) => {
+  console.log("serviceUrl",req.params.serviceUrl);
+  
+  try {
+    const { serviceUrl } = req.params;
+
+    const service = await Service.findOne({ serviceUrl })
+      .select("serviceVideo")
+      .lean();
+
+    if (!service || !service.serviceVideo) {
+      return res.status(404).json({
+        message: "Service video not found!",
+        success: false,
+      });
+    }
+
+    return res.status(200).json({
+      serviceVideo: service.serviceVideo,
+      success: true,
+    });
+
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message: "Failed to fetch service video",
+      success: false,
+    });
+  }
+};
+
+export const getMultiImageByUrl = async (req, res) => {
+  try {
+    const { serviceUrl } = req.params;
+
+    const service = await Service.findOne({ serviceUrl })
+      .select("multiImages")
+      .lean();
+
+    if (!service || !service.multiImages?.length) {
+      return res.status(404).json({
+        message: "No multi images found!",
+        success: false,
+      });
+    }
+
+    return res.status(200).json({
+      multiImages: service.multiImages,
+      success: true,
+    });
+
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message: "Failed to fetch multi images",
+      success: false,
+    });
+  }
+};
+
+export const getServiceUrls = async (req, res) => {
+  try {
+    const services = await Service.find(
+      { serviceEnabled: true },
+      { serviceUrl: 1, _id: 0 }
+    ).lean();
+
+    if (!services.length) {
+      return res.status(404).json({
+        message: "No service URLs found",
+        success: false,
+      });
+    }
+
+    // Convert to simple array of strings
+    const urls = services.map((service) => service.serviceUrl);
+
+    return res.status(200).json({
+      urls,
+      success: true,
+    });
+  } catch (error) {
+    console.error("Error fetching service URLs:", error);
+    return res.status(500).json({
+      message: "Failed to fetch service URLs",
+      success: false,
+    });
   }
 };
 

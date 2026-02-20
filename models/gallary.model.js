@@ -5,14 +5,18 @@ const gallarySchema = new mongoose.Schema({
         type: mongoose.Schema.Types.Mixed,  // Use Mixed for flexible structure (JSON-like object)
         required: false
     },
-     gallaryEnabled:{
-        type:Boolean,
-        required:true
-     },
-     userId:{
-        type: mongoose.Schema.Types.ObjectId, 
-          required:false
-      }
+    multiImages: {
+        type: mongoose.Schema.Types.Mixed,
+        required: false,
+    },
+    gallaryEnabled: {
+        type: Boolean,
+        required: true
+    },
+    userId: {
+        type: mongoose.Schema.Types.ObjectId,
+        required: false
+    }
 
 }, { timestamps: true });
 

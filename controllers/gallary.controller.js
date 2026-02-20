@@ -1,82 +1,251 @@
 import { Gallary } from '../models/gallary.model.js'; // Import the Gallary model
 import sharp from 'sharp';
 
-export const addGallery = async (req, res) => {
+/* =========================================================
+   🔹 GLOBAL SAFE IMAGE COMPRESSOR
+========================================================= */
+const compressImage = async (base64Image) => {
     try {
-        let { others, gallaryEnabled, userId } = req.body;
+        if (!base64Image) return null;
 
-        // Compress image function
-        const compressImage = async (base64Image) => {
-            const base64Data = base64Image.split(';base64,').pop();
-            const buffer = Buffer.from(base64Data, 'base64');
-            const compressedBuffer = await sharp(buffer)
-                .resize(800, 600, { fit: 'inside' }) // Resize to 800x600 max, maintaining aspect ratio
-                .jpeg({ quality: 80 }) // Convert to JPEG with 80% quality
-                .toBuffer();
-            return `data:image/jpeg;base64,${compressedBuffer.toString('base64')}`;
-        };
+        // Already stored image
+        if (!base64Image.startsWith("data:image")) {
+            return base64Image;
+        }
 
-        // Compress all images in the gallery
-        const compressAllImages = async (others) => {
-            if (!Array.isArray(others)) return []; // Return empty array if others is not valid
+        const matches = base64Image.match(/^data:(.+);base64,(.+)$/);
+        if (!matches) return base64Image;
 
-            return await Promise.all(
-                others.map(async (item) => {
-                    try {
-                        if (!Array.isArray(item.images)) {
-                            return item;
-                        }
+        const buffer = Buffer.from(matches[2], "base64");
 
-                        const compressedImages = await Promise.all(
-                            item.images.map(async (image) => {
-                                if (!image.file || !image.file.startsWith('data:image')) {
-                                    return null;
-                                }
-                                const compressedFile = await compressImage(image.file);
-                                return { ...image, file: compressedFile };
-                            })
-                        );
+        const compressedBuffer = await sharp(buffer)
+            .resize(1200, 800, { fit: "inside" })
+            .jpeg({ quality: 80 })
+            .toBuffer();
 
-                        return { ...item, images: compressedImages.filter(image => image !== null) };
-                    } catch (err) {
-                        console.error("Error processing item:", item, err);
-                        return item; // Fallback to original item if error occurs
-                    }
+        return `data:image/jpeg;base64,${compressedBuffer.toString("base64")}`;
+
+    } catch (err) {
+        console.error("Sharp compression failed:", err.message);
+        return base64Image; // prevent crash
+    }
+};
+
+/* =========================================================
+   🔹 COMPRESS SECTION IMAGES
+========================================================= */
+const compressAllImages = async (others = []) => {
+    if (!Array.isArray(others)) return [];
+
+    return await Promise.all(
+        others.map(async (section) => {
+            if (!Array.isArray(section.images)) return section;
+
+            const compressedImages = await Promise.all(
+                section.images.map(async (img, index) => {
+                    const base64 = img?.file || img;
+                    const compressed = await compressImage(base64);
+
+                    if (!compressed) return null;
+
+                    return {
+                        ...img,
+                        file: compressed,
+                        index,
+                    };
                 })
             );
-        };
 
-        // Process and compress images
+            return {
+                ...section,
+                images: compressedImages.filter(Boolean),
+            };
+        })
+    );
+};
+
+/* =========================================================
+   🔹 COMPRESS MULTI IMAGES
+========================================================= */
+const compressMultiImages = async (multiImages = []) => {
+    if (!Array.isArray(multiImages)) return [];
+
+    return await Promise.all(
+        multiImages.map(async (img, index) => {
+            const base64 =
+                typeof img === "string"
+                    ? img
+                    : img?.file || null;
+
+            if (!base64) return null;
+
+            const compressed = await compressImage(base64);
+
+            if (!compressed) return null;
+
+            return {
+                file: compressed,
+                index,
+            };
+        })
+    ).then(res => res.filter(Boolean));
+};
+
+/* =========================================================
+   🔹 ADD GALLERY
+========================================================= */
+export const addGallery = async (req, res) => {
+    try {
+        let { others, multiImages, gallaryEnabled, userId } = req.body;
+
         others = await compressAllImages(others);
+        multiImages = await compressMultiImages(multiImages);
 
-        // Create a new gallery document
-        const newGallery = new Gallary({
+        const newGallery = await Gallary.create({
             others,
+            multiImages,
             gallaryEnabled,
             userId,
         });
 
-        await newGallery.save();
-        res.status(201).json({ newGallery, success: true });
+        return res.status(201).json({
+            newGallery,
+            success: true,
+        });
+
     } catch (error) {
-        console.error('Error uploading gallery:', error);
-        res.status(500).json({ message: 'Failed to upload gallery', success: false });
+        console.error("Error uploading gallery:", error);
+        return res.status(500).json({
+            message: "Failed to upload gallery",
+            success: false,
+        });
     }
 };
 
-
-
-// Get all Galleries
+/* =========================================================
+   🔹 GET GALLERIES
+========================================================= */
 export const getGalleries = async (req, res) => {
     try {
-        const galleries = await Gallary.find();
-        if (!galleries) {
-            return res.status(404).json({ message: "No galleries found", success: false });
-        }
-        return res.status(200).json({ galleries, success: true });
+        const galleries = await Gallary.find().select("").sort({ createdAt: -1 });
+
+        return res.status(200).json({
+            galleries,
+            success: true,
+        });
+
     } catch (error) {
-        console.log(error);
-        res.status(500).json({ message: 'Failed to fetch galleries', success: false });
+        console.error(error);
+        return res.status(500).json({
+            message: "Failed to fetch galleries",
+            success: false,
+        });
+    }
+};
+
+/* =========================================================
+   🔹 GET GALLERIES
+========================================================= */
+export const getFrontendGalleries = async (req, res) => {
+    try {
+        const galleries = await Gallary.find().select("-multiImages").sort({ createdAt: -1 });
+
+        return res.status(200).json({
+            galleries,
+            success: true,
+        });
+
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            message: "Failed to fetch galleries",
+            success: false,
+        });
+    }
+};
+
+/* =========================================================
+   🔹 GET MULTI IMAGE BY GALLERY ID + INDEX
+========================================================= */
+export const getGalleryMultiImages = async (req, res) => {
+    try {
+        const { id, index } = req.params;
+
+        const gallery = await Gallary.findById(id)
+            .select("multiImages")
+            .lean();
+
+        if (!gallery) {
+            return res.status(404).json({
+                message: "Gallery not found",
+                success: false,
+            });
+        }
+
+        const image = gallery.multiImages?.find(
+            img => img.index === Number(index)
+        );
+
+        if (!image?.file) {
+            return res.status(404).json({
+                message: "Image not found",
+                success: false,
+            });
+        }
+
+        const matches = image.file.match(/^data:(.+);base64,(.+)$/);
+        if (!matches) {
+            return res.status(400).json({
+                message: "Invalid image format",
+                success: false,
+            });
+        }
+
+        const mimeType = matches[1];
+        const buffer = Buffer.from(matches[2], "base64");
+
+        res.set("Content-Type", mimeType);
+        res.set("Cache-Control", "public, max-age=86400");
+
+        return res.send(buffer);
+
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            message: "Failed to fetch image",
+            success: false,
+        });
+    }
+};
+
+export const getGalleryOthers = async (req, res) => {
+    try {
+        const galleries = await Gallary.find(
+            { gallaryEnabled: true },
+            { "others.sectionName": 1, "others.images.file": 1, _id: 0 }
+        ).lean();
+
+        if (!galleries.length) {
+            return res.status(404).json({
+                message: "No gallery data found",
+                success: false,
+            });
+        }
+
+        // Flatten structure (remove outer document level)
+        const others = galleries.flatMap(g => g.others);
+
+        return res.status(200).json({
+            others,
+            success: true,
+        });
+
+    } catch (error) {
+        console.error("Error fetching gallery others:", error);
+        return res.status(500).json({
+            message: "Failed to fetch gallery images",
+            success: false,
+        });
     }
 };
 
@@ -95,67 +264,41 @@ export const getGalleryById = async (req, res) => {
     }
 };
 
-// Update Gallery by ID
+/* =========================================================
+   🔹 UPDATE GALLERY
+========================================================= */
 export const updateGallery = async (req, res) => {
     try {
         const { id } = req.params;
-        let { others, gallaryEnabled, userId } = req.body;
+        let { others, multiImages, gallaryEnabled, userId } = req.body;
 
-        // Compress image function
-        const compressImage = async (base64Image) => {
-            const base64Data = base64Image.split(';base64,').pop();
-            const buffer = Buffer.from(base64Data, 'base64');
-            const compressedBuffer = await sharp(buffer)
-                .resize(800, 600, { fit: 'inside' }) // Resize to 800x600 max, maintaining aspect ratio
-                .jpeg({ quality: 80 }) // Convert to JPEG with 80% quality
-                .toBuffer();
-            return `data:image/jpeg;base64,${compressedBuffer.toString('base64')}`;
-        };
-
-        // Compress all images in the gallery
-        const compressAllImages = async (others) => {
-            if (!Array.isArray(others)) return []; // Return empty array if others is not valid
-
-            return await Promise.all(
-                others.map(async (item) => {
-                    try {
-                        if (!Array.isArray(item.images)) {
-                            return item;
-                        }
-
-                        const compressedImages = await Promise.all(
-                            item.images.map(async (image) => {
-                                if (!image.file || !image.file.startsWith('data:image')) {
-                                    return null;
-                                }
-                                const compressedFile = await compressImage(image.file);
-                                return { ...image, file: compressedFile };
-                            })
-                        );
-
-                        return { ...item, images: compressedImages.filter(image => image !== null) };
-                    } catch (err) {
-                        console.error("Error processing item:", item, err);
-                        return item; // Fallback to original item if error occurs
-                    }
-                })
-            );
-        };
-
-        // Process and compress images
         others = await compressAllImages(others);
+        multiImages = await compressMultiImages(multiImages);
 
-        // Update gallery data
-        const updatedData = { others, gallaryEnabled, userId };
+        const updatedGallery = await Gallary.findByIdAndUpdate(
+            id,
+            { others, multiImages, gallaryEnabled, userId },
+            { new: true, runValidators: true }
+        );
 
-        const updatedGallery = await Gallary.findByIdAndUpdate(id, updatedData, { new: true, runValidators: true });
         if (!updatedGallery) {
-            return res.status(404).json({ message: "Gallery not found", success: false });
+            return res.status(404).json({
+                message: "Gallery not found",
+                success: false,
+            });
         }
-        return res.status(200).json({ updatedGallery, success: true });
+
+        return res.status(200).json({
+            updatedGallery,
+            success: true,
+        });
+
     } catch (error) {
         console.error("Error updating gallery:", error);
-        res.status(400).json({ message: error.message, success: false });
+        return res.status(400).json({
+            message: error.message,
+            success: false,
+        });
     }
 };
 

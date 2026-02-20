@@ -97,6 +97,35 @@ export const getBlogName = async (req, res) => {
   }
 };
 
+export const getBlogUrls = async (req, res) => {  
+  try {
+    const blogs = await Blog.find(
+      {},
+      { blogUrl: 1, _id: 0 }
+    ).lean();
+
+    if (!blogs.length) {
+      return res.status(404).json({
+        message: "No blog URLs found",
+        success: false,
+      });
+    }
+
+    const urls = blogs.map(blog => blog.blogUrl);
+
+    return res.status(200).json({
+      urls,
+      success: true,
+    });
+  } catch (error) {
+    console.error("Error fetching blog URLs:", error);
+    return res.status(500).json({
+      message: "Failed to fetch blog URLs",
+      success: false,
+    });
+  }
+};
+
 
 // Get blog by ID
 export const getBlogById = async (req, res) => {
