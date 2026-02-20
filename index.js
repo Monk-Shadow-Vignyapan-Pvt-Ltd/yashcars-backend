@@ -16,11 +16,20 @@ const app = express();
 
 const server = createServer(app); // Create an HTTP server
 const io = new Server(server, {
+  transports: ["websocket"], // ⬅ prevents polling
   cors: {
-    origin: "*", // Adjust according to your needs
-    methods: ["GET", "POST"],
+    origin: [
+       "http://localhost:5173",
+      "http://localhost:5174",
+      "http://localhost:3000",
+      "https://symphonix.co.in",
+      "https://console.symphonix.co.in",
+      "https://yash-cars-next-new.vercel.app"
+    ],
+    credentials: true,
   },
 });
+
 
 // WebSocket connection
 io.on("connection", (socket) => {
@@ -38,15 +47,28 @@ app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 app.use(urlencoded({extended:true}));
 app.use(cookieParser());
 
-app.use(cors({
-  origin: "*", // Specify the frontend's origin
-  methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
-  allowedHeaders: ["Origin", "X-Requested-With", "Content-Type", "Accept", "Authorization", "x-auth-token"],
-  credentials: true, // Allow credentials if needed
-}));
-
-// Explicitly handle OPTIONS method for preflight
-app.options("*", cors()); // Allow preflight requests
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",
+      "http://localhost:5174",
+      "http://localhost:3000",
+      "https://symphonix.co.in",
+      "https://console.symphonix.co.in",
+      "https://yash-cars-next-new.vercel.app"
+    ], // Allow both domains
+    methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+    allowedHeaders: [
+      "Origin",
+      "X-Requested-With",
+      "Content-Type",
+      "Accept",
+      "Authorization",
+      "x-auth-token",
+    ],
+    credentials: true, // Allow cookies and authentication headers
+  })
+);
 
 // api's route
 app.use("/api/v1/auth", routes.authRoute);
