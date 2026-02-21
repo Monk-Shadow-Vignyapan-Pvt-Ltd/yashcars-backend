@@ -87,6 +87,28 @@ export const getBlogs = async (req, res) => {
   }
 };
 
+export const getBlogImageById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const blog = await Blog.findOne({ _id: id }).select('blogImage');
+    if (!blog) return res.status(404).json({ message: "Blog not found!", success: false });
+    const matches = blog.blogImage.match(/^data:(.+);base64,(.+)$/);
+    if (!matches) {
+      return res.status(400).send('Invalid image format');
+    }
+
+    const mimeType = matches[1];
+    const base64Data = matches[2];
+    const buffer = Buffer.from(base64Data, 'base64');
+
+    res.set('Content-Type', mimeType);
+    res.send(buffer);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: 'Failed to fetch service image', success: false });
+  }
+};
+
 export const getBlogName = async (req, res) => {
   try {
     const blogs = await Blog.find({}, 'blogTitle blogUrl'); // Only select blogTitle and blogUrl
@@ -97,7 +119,7 @@ export const getBlogName = async (req, res) => {
   }
 };
 
-export const getBlogUrls = async (req, res) => {  
+export const getBlogUrls = async (req, res) => {
   try {
     const blogs = await Blog.find(
       {},
@@ -126,7 +148,6 @@ export const getBlogUrls = async (req, res) => {
   }
 };
 
-
 // Get blog by ID
 export const getBlogById = async (req, res) => {
   try {
@@ -145,7 +166,7 @@ export const getBlogById = async (req, res) => {
 export const getBlogByUrl = async (req, res) => {
   try {
     const blogUrl = req.params.id;
-    const blog = await Blog.findOne({ blogUrl })
+    const blog = await Blog.findOne({ blogUrl }).select('-blogImage'); // Exclude blogImage field
     if (!blog) return res.status(404).json({ message: "Blog not found!", success: false });
     return res.status(200).json({ blog, success: true });
   } catch (error) {
@@ -220,7 +241,7 @@ export const getBlogsFrontend = async (req, res) => {
 
     const totalBlogs = await Blog.countDocuments(filter);
 
-    const blogs = await Blog.find(filter)
+    const blogs = await Blog.find(filter).select('-blogImage')
       .sort({ _id: -1 })
       .skip(skip)
       .limit(limit)

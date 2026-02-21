@@ -72,15 +72,16 @@ const compressMultiImages = async (multiImages = []) => {
 
     return await Promise.all(
         multiImages.map(async (img, index) => {
+
+            // ✅ Support all shapes
             const base64 =
                 typeof img === "string"
                     ? img
-                    : img?.file || null;
+                    : img?.file || img?.image || null;
 
             if (!base64) return null;
 
             const compressed = await compressImage(base64);
-
             if (!compressed) return null;
 
             return {
@@ -96,10 +97,16 @@ const compressMultiImages = async (multiImages = []) => {
 ========================================================= */
 export const addGallery = async (req, res) => {
     try {
-        let { others, multiImages, gallaryEnabled, userId } = req.body;
+        let { others, multiImages = [], gallaryEnabled, userId } = req.body;
 
         others = await compressAllImages(others);
-        multiImages = await compressMultiImages(multiImages);
+
+        // ✅ normalize dashboard DTO
+        const normalizedMulti = multiImages.map(img => ({
+            file: img?.image || img?.file || img
+        }));
+
+        multiImages = await compressMultiImages(normalizedMulti);
 
         const newGallery = await Gallary.create({
             others,
@@ -148,7 +155,7 @@ export const getGalleries = async (req, res) => {
 ========================================================= */
 export const getFrontendGalleries = async (req, res) => {
     try {
-        const galleries = await Gallary.find().select("-multiImages").sort({ createdAt: -1 });
+        const galleries = await Gallary.find().select("-multiImages.file")
 
         return res.status(200).json({
             galleries,
@@ -165,52 +172,58 @@ export const getFrontendGalleries = async (req, res) => {
 };
 
 /* =========================================================
-   🔹 GET MULTI IMAGE BY GALLERY ID + INDEX
+   🔹 GET MULTI IMAGE BY GALLERY ID + INDEX (OPTIMIZED)
 ========================================================= */
 export const getGalleryMultiImages = async (req, res) => {
     try {
         const { id, index } = req.params;
+        const imgIndex = Number(index);
 
-        const gallery = await Gallary.findById(id)
-            .select("multiImages")
-            .lean();
-
-        if (!gallery) {
-            return res.status(404).json({
-                message: "Gallery not found",
+        // ✅ Validate index early
+        if (Number.isNaN(imgIndex) || imgIndex < 0) {
+            return res.status(400).json({
+                message: "Invalid image index",
                 success: false,
             });
         }
 
-        const image = gallery.multiImages?.find(
-            img => img.index === Number(index)
-        );
+        // ✅ Fetch only required image using Mongo slice
+        const gallery = await Gallary.findById(id)
+            .select({ multiImages: { $slice: [imgIndex, 1] } })
+            .lean();
 
-        if (!image?.file) {
+        if (!gallery || !gallery.multiImages?.[0]?.file) {
             return res.status(404).json({
                 message: "Image not found",
                 success: false,
             });
         }
 
-        const matches = image.file.match(/^data:(.+);base64,(.+)$/);
-        if (!matches) {
+        const imageData = gallery.multiImages[0].file;
+
+        // ✅ Parse base64
+        const match = imageData.match(/^data:([^;]+);base64,(.+)$/);
+        if (!match) {
             return res.status(400).json({
                 message: "Invalid image format",
                 success: false,
             });
         }
 
-        const mimeType = matches[1];
-        const buffer = Buffer.from(matches[2], "base64");
+        const mimeType = match[1];
+        const buffer = Buffer.from(match[2], "base64");
 
-        res.set("Content-Type", mimeType);
-        res.set("Cache-Control", "public, max-age=86400");
+        // ✅ Strong CDN/browser caching
+        res.set({
+            "Content-Type": mimeType,
+            "Content-Length": buffer.length,
+            "Cache-Control": "public, max-age=31536000, immutable",
+        });
 
         return res.send(buffer);
 
     } catch (error) {
-        console.error(error);
+        console.error("getGalleryMultiImages error:", error);
         return res.status(500).json({
             message: "Failed to fetch image",
             success: false,
