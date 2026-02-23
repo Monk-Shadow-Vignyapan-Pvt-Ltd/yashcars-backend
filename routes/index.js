@@ -1,6 +1,7 @@
 import authRoute from "./auth.route.js";
 import statusRoute from "./status.route.js";
 import brandRoute from "./brand.route.js";
+import webBrandRoute from "./webBrand.route.js";
 import carAccessoryRoute from "./carAccessories.route.js";
 import homeAudioRoute from "./homeAudio.route.js";
 import audioWorkRoute from "./audioWork.route.js";
@@ -23,6 +24,7 @@ const routes = {
   authRoute,
   statusRoute,
   brandRoute,
+  webBrandRoute,
   carAccessoryRoute,
   homeAudioRoute,
   audioWorkRoute,

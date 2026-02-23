@@ -74,6 +74,7 @@ app.use(
 app.use("/api/v1/auth", routes.authRoute);
 app.use("/api/v1/statuses", routes.statusRoute);
 app.use("/api/v1/brands", routes.brandRoute);
+app.use("/api/v1/webBrands", routes.webBrandRoute);
 app.use("/api/v1/carAccessories", routes.carAccessoryRoute);
 app.use("/api/v1/homeAudios", routes.homeAudioRoute);
 app.use("/api/v1/audioWorks", routes.audioWorkRoute);
